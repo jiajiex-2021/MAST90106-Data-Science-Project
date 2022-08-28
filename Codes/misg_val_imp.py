@@ -73,6 +73,7 @@ def collab_fltr(df, subjects_col, sim_cols, ca_col_with_nas, val_col_with_nas, n
         subject_idx = df.loc[:, subjects_col] == subject
         actl_cas_set = set(df.loc[subject_idx, ca_col_with_nas])
         ref_ca = list(actl_cas_set)[0]  # The reference category is the target subject's first category by default
+        ref_ca_idx = df.loc[:, ca_col_with_nas] == ref_ca
 
         # Only the subjects with missing value categories are needed to be imputed
         if actl_cas_set != ca_col_with_nas_set:
@@ -91,8 +92,8 @@ def collab_fltr(df, subjects_col, sim_cols, ca_col_with_nas, val_col_with_nas, n
 
                     if valid_sub_id_2_flag and subject_2 != subject:
                         integ_distance = integ_dist(df=df,
-                                                    row_1_idx=subject_idx & (df.loc[:, ca_col_with_nas] == ref_ca),
-                                                    row_2_idx=subject_2_idx & (df.loc[:, ca_col_with_nas] == ref_ca),
+                                                    row_1_idx=subject_idx & ref_ca_idx,
+                                                    row_2_idx=subject_2_idx & ref_ca_idx,
                                                     sim_cols=sim_cols, squared=True)
                         integ_similarity = euclidean_sim(squared_dist=integ_distance)
                         integ_sims_list.append([subject_2, integ_similarity])
