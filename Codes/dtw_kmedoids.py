@@ -8,13 +8,16 @@ import time
 
 
 class DtwKmedoids:
-    def __init__(self, clusters, centroids, centroids_detail, integ_dist_mat_sq, wss, s_coef):
+    def __init__(self, clusters, centroids, centroids_detail, integ_dist_mat_sq, wss, s_coef, total_iterations,
+                 wss_list):
         self.clusters = clusters
         self.centroids = centroids
         self.centroids_detail = centroids_detail
         self.integ_dist_mat_square = integ_dist_mat_sq
         self.within_cluster_sst = wss
         self.silhouette_coef = s_coef
+        self.total_iterations = total_iterations
+        self.wss_list = wss_list
 
 
 def fit(df, n_clusters, uni_dim_cols=None, multi_dim_cols=None, max_iterations=None, wss_threshold=None):
@@ -26,6 +29,8 @@ def fit(df, n_clusters, uni_dim_cols=None, multi_dim_cols=None, max_iterations=N
 
     current_iteration = 1
 
+    wss_list = []
+
     n_rows = len(df.index)
     init_centroids_idx_list = random.sample(range(n_rows), n_clusters)
 
@@ -36,6 +41,7 @@ def fit(df, n_clusters, uni_dim_cols=None, multi_dim_cols=None, max_iterations=N
     current_clusters = init_clusters
     current_centroids_idx_list = init_centroids_idx_list
     current_clusters_wss = within_cluster_sst(clusters=init_clusters, integ_dist_mat_sq=integ_dist_mat_sq)
+    wss_list.append(current_clusters_wss)
 
     for new_iterations in range(max_iterations - 1):
         if current_clusters_wss < wss_threshold:
@@ -51,6 +57,7 @@ def fit(df, n_clusters, uni_dim_cols=None, multi_dim_cols=None, max_iterations=N
         current_clusters = new_clusters
         current_centroids_idx_list = new_centroids_idx_list
         current_clusters_wss = new_clusters_wss
+        wss_list.append(current_clusters_wss)
 
     current_centroids_detail = extr_centroids_detail(df=df, uni_dim_cols=uni_dim_cols, multi_dim_cols=multi_dim_cols,
                                                      clusters=current_clusters)
@@ -58,7 +65,8 @@ def fit(df, n_clusters, uni_dim_cols=None, multi_dim_cols=None, max_iterations=N
 
     return DtwKmedoids(clusters=current_clusters, centroids=current_centroids_idx_list,
                        centroids_detail=current_centroids_detail, integ_dist_mat_sq=integ_dist_mat_sq,
-                       wss=current_clusters_wss, s_coef=current_s_coef)
+                       wss=current_clusters_wss, s_coef=current_s_coef, total_iterations=current_iteration,
+                       wss_list=wss_list)
 
 
 def integ_dist(df, row_1_idx, row_2_idx, uni_dim_cols, multi_dim_cols, squared=False):
@@ -91,7 +99,8 @@ def integ_dist_matrix(df, uni_dim_cols, multi_dim_cols, squared=False):
     for row_i_idx in range(n_rows):
 
         for row_j_idx in range(n_rows):
-            integ_dist_mat[row_i_idx][row_j_idx] = integ_dist(df, row_i_idx, row_j_idx, uni_dim_cols, multi_dim_cols)
+            integ_dist_mat[row_i_idx][row_j_idx] = integ_dist(df, row_i_idx, row_j_idx, uni_dim_cols, multi_dim_cols,
+                                                              squared=True)
 
     if squared:
         return integ_dist_mat
