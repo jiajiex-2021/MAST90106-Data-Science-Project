@@ -80,8 +80,9 @@ def collab_fltr(df, subjects_col, sim_cols, ca_col_with_nas, val_col_with_nas, n
 
             for diff_ca in diff_cas_set:
 
-                integ_sims_list = []
+                integ_sims_list = []  # Data structure to store the neighbours and their similarity to target subject
 
+                # Collect the neighbours and their similarity
                 for subject_2 in subjects_list:
 
                     subject_2_idx = df.loc[:, subjects_col] == subject_2
@@ -93,22 +94,23 @@ def collab_fltr(df, subjects_col, sim_cols, ca_col_with_nas, val_col_with_nas, n
                                                     row_1_idx=subject_idx & (df.loc[:, ca_col_with_nas] == ref_ca),
                                                     row_2_idx=subject_2_idx & (df.loc[:, ca_col_with_nas] == ref_ca),
                                                     sim_cols=sim_cols, squared=True)
-                        integ_sim = euclidean_sim(squared_dist=integ_distance)
-                        integ_sims_list.append([subject_2, integ_sim])
-                        integ_sims_list.sort(key=lambda x: x[1], reverse=True)
+                        integ_similarity = euclidean_sim(squared_dist=integ_distance)
+                        integ_sims_list.append([subject_2, integ_similarity])
+
+                integ_sims_list.sort(key=lambda x: x[1], reverse=True)  # Calculate the top number of neighbours
 
                 # The weighted average of the top n_neighbors' value of the target subject's missing value category
-                numerator = 0
-                denominator = 0
+                numerator, denominator = 0, 0
                 for i in range(0, n_neighbors):
                     numerator += integ_sims_list[i][1] * df.loc[
                         df.loc[:, subjects_col] == integ_sims_list[i][0], val_col_with_nas]
                     denominator += integ_sims_list[i][1]
                 predicted_value = numerator / denominator
 
-                init_target_df.append(
-                    {subjects_col: subject, ca_col_with_nas: diff_ca, val_col_with_nas: predicted_value},
-                    ignore_index=True)
+                # Append the missing value for each category of each subject to the target dataframe
+                init_target_df = pd.concat([init_target_df, pd.DataFrame(
+                    {subjects_col: [subject], ca_col_with_nas: [diff_ca], val_col_with_nas: [predicted_value]})],
+                                           ignore_index=True)
 
     final_target_df = init_target_df
 
