@@ -8,8 +8,8 @@ pd.options.display.max_rows = 100
 
 # Option 1: Use the KNNImputer to impute the missing values
 
-def knn_imputation(df, cols_with_nas):
-    knn_imp = KNNImputer(n_neighbors=5)
+def knn_imputation(df, cols_with_nas, n_neighbors):
+    knn_imp = KNNImputer(n_neighbors=n_neighbors)
     data_mat = df.loc[:, cols_with_nas]
     df.loc[:, cols_with_nas] = knn_imp.fit_transform(data_mat)
     return df
